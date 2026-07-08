@@ -39,6 +39,24 @@ ORDER  BY snapshot_at DESC, capital
 LIMIT  10;
 ```
 
+
+## Additional ETLs
+
+```bash
+# Daily sea-surface temperature by city/date for Mediterranean and Black Sea places.
+# Existing rows are updated for the same region/country/place/date.
+uv run sea-temperature-etl
+
+# Global storm alarms from the GDACS tropical-cyclone feed.
+# Existing alarms are updated by source alarm ID.
+uv run storm-alarms-etl
+```
+
+New tables are created by migrations:
+
+- `sea_temperature`: one row per monitored place and local date, with mean/min/max sea-surface temperature.
+- `storm_alarms`: one row per GDACS tropical-cyclone alarm/event episode.
+
 ## Configuration
 
 Credentials are read from the environment (a local `.env` is auto-loaded):

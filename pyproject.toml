@@ -12,6 +12,9 @@ dependencies = [
 [project.scripts]
 eu-weather-etl = "eu_weather_etl.main:main"
 eu-weather-migrate = "eu_weather_etl.migrate:main"
+eu-weather-forecast-accuracy = "eu_weather_etl.accuracy_main:main"
+sea-temperature-etl = "eu_weather_etl.sea_temperature_main:main"
+storm-alarms-etl = "eu_weather_etl.storm_alarms_main:main"
 
 [build-system]
 requires = ["hatchling"]
