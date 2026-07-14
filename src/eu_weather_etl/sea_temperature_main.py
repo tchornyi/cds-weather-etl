@@ -11,6 +11,7 @@ from eu_weather_etl.extract_sea_temperature import fetch_sea_temperatures
 from eu_weather_etl.load_sea_temperature import load_sea_temperatures
 from eu_weather_etl.migrate import run_migrations
 from eu_weather_etl.sea_places import SEA_PLACES
+from eu_weather_etl.telemetry import record_rows_affected
 from eu_weather_etl.transform_sea_temperature import transform_all
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,12 @@ def run(
         )
         records = transform_all(pairs, fetched_at)
         upserted = load_sea_temperatures(conn, records)
+        record_rows_affected(
+            upserted,
+            pipeline="sea_temperature",
+            table="sea_temperature",
+            operation="upsert",
+        )
 
     logger.info("Sea-temperature ETL complete: %d rows upserted.", upserted)
     return upserted

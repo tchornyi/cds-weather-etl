@@ -14,6 +14,7 @@ from eu_weather_etl.db import connect
 from eu_weather_etl.extract import fetch_weather
 from eu_weather_etl.load import load_snapshot
 from eu_weather_etl.migrate import run_migrations
+from eu_weather_etl.telemetry import record_rows_affected
 from eu_weather_etl.transform import transform_all
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,12 @@ def run(skip_migrations: bool = False) -> int:
             time.sleep(float(sleep_time))
 
         inserted = load_snapshot(conn, records)
+        record_rows_affected(
+            inserted,
+            pipeline="load-eu-caps-weather",
+            table="eu_caps_weather_logs",
+            operation="insert",
+        )
 
     logger.info("Snapshot %s complete: %d rows.", snapshot_id, inserted)
     return inserted

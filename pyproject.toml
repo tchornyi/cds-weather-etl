@@ -5,6 +5,7 @@ description = "ETL that snapshots current weather for all European capitals into
 requires-python = ">=3.11"
 dependencies = [
     "httpx>=0.27",
+    "opentelemetry-api>=1.25,<2",
     "psycopg[binary]>=3.2",
     "python-dotenv>=1.0",
 ]

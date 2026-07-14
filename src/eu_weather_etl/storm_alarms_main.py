@@ -10,6 +10,7 @@ from eu_weather_etl.db import connect
 from eu_weather_etl.extract_storm_alarms import DEFAULT_FEED_URL, fetch_storm_alarms
 from eu_weather_etl.load_storm_alarms import load_storm_alarms
 from eu_weather_etl.migrate import run_migrations
+from eu_weather_etl.telemetry import record_rows_affected
 from eu_weather_etl.transform_storm_alarms import transform_storm_alarms
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,12 @@ def run(feed_url: str = DEFAULT_FEED_URL, skip_migrations: bool = False) -> int:
         xml_text = fetch_storm_alarms(feed_url)
         records = transform_storm_alarms(xml_text, fetched_at)
         upserted = load_storm_alarms(conn, records)
+        record_rows_affected(
+            upserted,
+            pipeline="storm_alarms",
+            table="storm_alarms",
+            operation="upsert",
+        )
 
     logger.info("Storm-alarms ETL complete: %d rows upserted.", upserted)
     return upserted
