@@ -59,8 +59,16 @@ uv run eu-weather-etl --skip-migrations --log-level DEBUG
 
 Database credentials come **only** from the environment (`config.py`):
 
-- `DATABASE_URL` — a full libpq connection string; takes precedence if set, **or**
-- `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGSSLMODE` — individual parts.
+When deployed by SEAD CDS, database credentials come from an attached shared
+**Connection**, injected as `{PREFIX}_HOST`, `{PREFIX}_PORT`, `{PREFIX}_DB`,
+`{PREFIX}_USER`, `{PREFIX}_PASSWORD`, `{PREFIX}_URI`. `CDS_DB_PREFIX` names the
+prefix to read (default `DB`); `{PREFIX}_URI` alone is enough. Resolution order:
+
+1. `CDS_DB_PREFIX`-prefixed Connection vars (`{PREFIX}_URI`, else the parts).
+2. `DATABASE_URL` — a full libpq connection string.
+3. `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGSSLMODE`.
+
+2 and 3 are the fallback for local runs and pre-Connections deployments.
 
 A local `.env` file is auto-loaded; real environment variables always override it.
 
