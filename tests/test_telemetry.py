@@ -62,6 +62,28 @@ class TelemetryTests(unittest.TestCase):
                 {"Authorization": "Bearer token", "X-Test": "yes"},
             )
 
+    def test_metrics_environment_log_redacts_credentials(self):
+        env = {
+            "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT": (
+                "http://user:secret@localhost:4318/v1/metrics?token=hidden"
+            ),
+            "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL": "http/json",
+            "OTEL_EXPORTER_OTLP_METRICS_HEADERS": "Authorization=Bearer%20secret",
+            "OTEL_RESOURCE_ATTRIBUTES": "cds.run.id=123,private.key=hidden",
+        }
+        with patch.dict("os.environ", env, clear=True), self.assertLogs(
+            telemetry.LOGGER, level="INFO"
+        ) as captured:
+            telemetry._log_metrics_environment()
+
+        message = captured.output[0]
+        self.assertIn("http://localhost:4318/v1/metrics", message)
+        self.assertIn("http/json", message)
+        self.assertIn("Authorization", message)
+        self.assertIn("cds.run.id", message)
+        self.assertNotIn("secret", message)
+        self.assertNotIn("hidden", message)
+
     def test_metrics_data_converts_to_cds_otlp_json(self):
         metrics_data = MetricsData(
             resource_metrics=[

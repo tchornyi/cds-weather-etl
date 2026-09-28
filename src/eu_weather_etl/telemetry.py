@@ -7,7 +7,7 @@ import logging
 import os
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import unquote
+from urllib.parse import unquote, urlsplit
 from urllib.request import Request, urlopen
 
 from opentelemetry import metrics
@@ -250,6 +250,7 @@ def record_rows_affected(
     table: str,
     operation: str,
 ) -> None:
+    _log_metrics_environment()
     _ROWS_AFFECTED.record(
         rows,
         {
@@ -259,6 +260,39 @@ def record_rows_affected(
         },
     )
     _flush_metrics()
+
+
+def _log_metrics_environment() -> None:
+    endpoint = os.environ.get("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "")
+    parsed = urlsplit(endpoint)
+    target = (
+        f"{parsed.scheme}://{parsed.netloc.rsplit('@', 1)[-1]}{parsed.path}"
+        if endpoint
+        else "<unset>"
+    )
+    resource_attributes = os.environ.get("OTEL_RESOURCE_ATTRIBUTES", "")
+    resource_keys = [
+        item.partition("=")[0]
+        for item in resource_attributes.split(",")
+        if item
+    ]
+    LOGGER.info(
+        (
+            "OTLP metrics env: OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=%s "
+            "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL=%s "
+            "OTEL_EXPORTER_OTLP_METRICS_HEADERS keys=%s "
+            "OTEL_RESOURCE_ATTRIBUTES keys=%s "
+            "OTEL_EXPORTER_OTLP_METRICS_TIMEOUT=%s"
+        ),
+        target,
+        os.environ.get("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", "<unset>"),
+        sorted(_otel_headers()),
+        sorted(resource_keys),
+        os.environ.get(
+            "OTEL_EXPORTER_OTLP_METRICS_TIMEOUT",
+            os.environ.get("OTEL_EXPORTER_OTLP_TIMEOUT", "<unset>"),
+        ),
+    )
 
 
 def _flush_metrics() -> None:
